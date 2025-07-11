@@ -1,10 +1,11 @@
 use serde_aux::field_attributes::deserialize_number_from_string;
-#[derive(serde::Deserialize, Clone)]
+
+#[derive(serde::Deserialize, Clone, Debug)]
 pub struct ServiceSettings {
     pub application: ApplicationSettings,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone, Debug)]
 pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,

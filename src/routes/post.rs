@@ -5,8 +5,11 @@ use crate::user::DocumentNumber;
 use crate::user::User;
 use crate::user::UserName;
 use actix_web::HttpResponse;
+use actix_web::Responder;
+use actix_web::middleware::Logger;
 use actix_web::web;
 use chrono::NaiveDate;
+use log::info;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
@@ -29,9 +32,10 @@ pub struct Out {
 
 pub async fn client_creation(
     data: web::Json<UserData>,
-    database: web::Data<Mutex<Database>>,
+    database: web::Data<Arc<Mutex<Database>>>,
 ) -> Result<web::Json<Out>, CreateUserError> {
     let user_name = UserName::parse_and_validate(&data.client_name)?;
+    // TODO(elsuizo: 2025-07-13): better error for parsing `bird_date`
     let bird_date =
         NaiveDate::parse_from_str(&data.bird_date, "%Y-%m-%d").expect("Error parsing the date");
     let document_number = DocumentNumber::parse_and_validate(data.document_number)?;
@@ -40,9 +44,14 @@ pub async fn client_creation(
     let user = User::new(user_name, bird_date, document_number, country);
 
     // TODO(elsuizo: 2025-07-12): no se que hacer con ese unwrap
-    database.lock().unwrap().insert_new_user(&user)?;
+    let id = database.lock().unwrap().insert_new_user(&user)?;
 
-    Ok(web::Json(Out {
-        client_id: user.get_id(),
-    }))
+    info!("database state: {:?}", database);
+
+    Ok(web::Json(Out { client_id: id }))
+}
+
+/// debug dummy handler
+pub async fn health_check() -> impl Responder {
+    HttpResponse::Ok().finish()
 }

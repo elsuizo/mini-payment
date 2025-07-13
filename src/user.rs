@@ -26,15 +26,13 @@ pub enum CreateUserError {
     UserAlreadyExistsError(DocumentNumber),
 }
 
-// TODO(elsuizo: 2025-07-11): maybe a better name???
-
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq, serde::Deserialize)]
 pub struct User {
     client_name: UserName,
     bird_date: NaiveDate,
-    pub document_number: DocumentNumber,
+    document_number: DocumentNumber,
     country: CountryName,
-    client_id: Uuid,
+    //client_id: Uuid,
     credit: Decimal,
 }
 
@@ -56,12 +54,17 @@ impl User {
             bird_date,
             document_number,
             country,
-            client_id: Uuid::new_v4(),
+            //client_id: Uuid::new_v4(),
             credit: 0.into(),
         }
     }
-    pub fn get_id(&self) -> Uuid {
-        self.client_id
+
+    // pub fn get_id(&self) -> Uuid {
+    //     self.client_id
+    // }
+
+    pub fn get_document_number(&self) -> usize {
+        self.document_number.0
     }
 }
 
@@ -71,13 +74,7 @@ impl PartialEq for User {
     }
 }
 
-// impl User {
-//     pub fn new(client_name: UserName, bird_date: DateTime<Utc>, document_number: DocumentNumber, country: CountryName) -> Self {
-//
-//     }
-// }
-
-#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, serde::Deserialize)]
 pub struct CountryName(String);
 
 impl CountryName {
@@ -121,7 +118,7 @@ impl AsRef<str> for CountryName {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, PartialOrd, Eq, serde::Deserialize)]
 pub struct DocumentNumber(usize);
 
 impl DocumentNumber {
@@ -141,7 +138,7 @@ impl DocumentNumber {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, serde::Deserialize)]
 pub struct UserName(String);
 
 // TODO(elsuizo: 2025-07-12): sacar todos los comentarios en espaniol

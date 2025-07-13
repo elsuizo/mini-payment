@@ -1,15 +1,16 @@
-use actix_web::App;
-use chrono::NaiveDate;
+use actix_web::middleware::Logger;
+use env_logger::Env;
+use log::info;
 use mini_payment::configuration::get_configuration;
-use mini_payment::local_database::Database;
 use mini_payment::service::Application;
-use mini_payment::user::{CountryName, DocumentNumber, User, UserName};
-use std::error::Error;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let configuration = get_configuration().expect("Failed to read configuration file");
+    // TODO(elsuizo: 2025-07-13): esto deberia ser parte de la configuracion
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
+    let configuration = get_configuration()?;
     let application = Application::build(configuration).await?;
     application.run_until_stopped().await?;
+
     Ok(())
 }

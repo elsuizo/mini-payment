@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Deserialize)]
 pub struct Database {
     users: HashMap<User, Uuid>,
 }
@@ -16,14 +16,16 @@ impl Database {
             users: HashMap::new(),
         }
     }
-    // TODO(elsuizo: 2025-07-12): get rid of this 2 clones...
-    pub fn insert_new_user(&mut self, user: &User) -> Result<(), CreateUserError> {
-        if let None = self.users.insert(user.clone(), user.get_id()) {
-            Ok(())
-        } else {
-            Err(CreateUserError::UserAlreadyExistsError(
-                user.clone().document_number,
+    // TODO(elsuizo: 2025-07-12): get rid of this clone
+    pub fn insert_new_user(&mut self, user: &User) -> Result<Uuid, CreateUserError> {
+        if self.users.contains_key(user) {
+            Err(CreateUserError::InvalidDocumentNumber(
+                user.get_document_number(),
             ))
+        } else {
+            let id = Uuid::new_v4();
+            self.users.insert(user.clone(), id);
+            Ok(id)
         }
     }
 }

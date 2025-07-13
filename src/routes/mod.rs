@@ -1,4 +1,4 @@
 mod error;
 mod post;
 
-pub use post::client_creation;
+pub use post::{client_creation, health_check};

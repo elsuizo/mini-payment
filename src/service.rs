@@ -3,6 +3,7 @@ use crate::configuration::ServiceSettings;
 use crate::local_database::Database;
 use crate::routes::client_creation;
 use actix_web::dev::Server;
+use actix_web::middleware::Logger;
 use actix_web::web::Data;
 use actix_web::{App, HttpServer, web};
 use std::net::TcpListener;
@@ -40,12 +41,12 @@ pub async fn run(
     base_url: String,
     database: Arc<Mutex<Database>>,
 ) -> Result<Server, anyhow::Error> {
-    let database = web::Data::new(database);
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .route("/new_client", web::post().to(client_creation))
             // NOTE(elsuizo: 2025-07-12): clone a Arc is cheap :)
-            .app_data(database.clone())
+            .app_data(web::Data::new(database.clone()))
     })
     .listen(listener)?
     .run();

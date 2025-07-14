@@ -1,32 +1,91 @@
-use crate::user;
-use crate::user::DocumentNumber;
-use crate::user::{CreateUserError, User};
+use crate::user::{CreateUserError, DatabaseError, User};
+use chrono::{DateTime, Datelike, Local};
+use rust_decimal::Decimal;
 use std::collections::HashMap;
-use thiserror::Error;
+use std::error::Error;
+use std::io::Write;
+use std::{fmt::format, fs::File};
 use uuid::Uuid;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Database {
-    users: HashMap<User, Uuid>,
+    users: HashMap<Uuid, User>,
+    files_generate: usize,
 }
 
 impl Database {
     pub fn new() -> Self {
         Self {
             users: HashMap::new(),
+            files_generate: 0,
         }
     }
     // TODO(elsuizo: 2025-07-12): get rid of this clone
-    pub fn insert_new_user(&mut self, user: &User) -> Result<Uuid, CreateUserError> {
-        if self.users.contains_key(user) {
+    pub fn insert_new_user(&mut self, new_user: &User) -> Result<Uuid, CreateUserError> {
+        if self.users.values().any(|user| user == new_user) {
             Err(CreateUserError::InvalidDocumentNumber(
-                user.get_document_number(),
+                new_user.get_document_number(),
             ))
         } else {
             let id = Uuid::new_v4();
-            self.users.insert(user.clone(), id);
+            self.users.insert(id, new_user.clone());
             Ok(id)
         }
+    }
+
+    pub fn find_user_and_increase_balance(
+        &mut self,
+        id: Uuid,
+        amount: Decimal,
+    ) -> Result<Decimal, DatabaseError> {
+        if let Some(user) = self.users.get_mut(&id) {
+            user.increase_credit(amount);
+            Ok(user.get_actual_credit())
+        } else {
+            Err(DatabaseError::UnknownUser(id))
+        }
+    }
+
+    pub fn find_user_and_decrease_balance(
+        &mut self,
+        id: Uuid,
+        amount: Decimal,
+    ) -> Result<Decimal, DatabaseError> {
+        if let Some(user) = self.users.get_mut(&id) {
+            user.decrease_credit(amount)?;
+            Ok(user.get_actual_credit())
+        } else {
+            Err(DatabaseError::UnknownUser(id))
+        }
+    }
+
+    pub fn get_user(&self, id: Uuid) -> Result<User, DatabaseError> {
+        if let Some(user) = self.users.get(&id) {
+            // TODO(elsuizo: 2025-07-13): no clone pleaseee...
+            Ok(user.clone())
+        } else {
+            Err(DatabaseError::UnknownUser(id))
+        }
+    }
+
+    pub fn store_balances(&mut self) -> Result<(), Box<dyn Error>> {
+        self.files_generate += 1;
+        let local: DateTime<Local> = Local::now();
+        let year = local.year();
+        let month = local.month();
+        let day = local.day();
+        let mut content = String::new();
+        let mut file = File::create(format!(
+            "{}{}{}_{}.DAT",
+            day, month, year, self.files_generate
+        ))?;
+
+        for (k, v) in self.users.iter_mut() {
+            content += &format!("{} {}\n", k, v.get_actual_credit()).to_string();
+            v.reset_credit();
+        }
+        file.write_all(content.as_bytes())?;
+        Ok(())
     }
 }
 

@@ -1,10 +1,6 @@
 use chrono::NaiveDate;
-use chrono::Utc;
 use rust_decimal::Decimal;
-use std::cell::LazyCell;
-use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
-use std::path::is_separator;
 use thiserror::Error;
 use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
@@ -26,13 +22,22 @@ pub enum CreateUserError {
     UserAlreadyExistsError(DocumentNumber),
 }
 
+#[derive(Error, Debug)]
+pub enum DatabaseError {
+    #[error("invalid name: {0:?}")]
+    UnknownUser(Uuid),
+    #[error("Insufficient Balance {0}")]
+    InsufficientBalance(Decimal),
+    #[error("UnknownError")]
+    Other,
+}
+
 #[derive(Debug, Clone, Eq, serde::Deserialize)]
 pub struct User {
-    client_name: UserName,
+    pub client_name: UserName,
     bird_date: NaiveDate,
     document_number: DocumentNumber,
     country: CountryName,
-    //client_id: Uuid,
     credit: Decimal,
 }
 
@@ -54,17 +59,33 @@ impl User {
             bird_date,
             document_number,
             country,
-            //client_id: Uuid::new_v4(),
             credit: 0.into(),
         }
     }
 
-    // pub fn get_id(&self) -> Uuid {
-    //     self.client_id
-    // }
-
     pub fn get_document_number(&self) -> usize {
         self.document_number.0
+    }
+
+    pub fn increase_credit(&mut self, amount: Decimal) {
+        self.credit += amount
+    }
+
+    pub fn get_actual_credit(&self) -> Decimal {
+        self.credit
+    }
+
+    pub fn decrease_credit(&mut self, amount: Decimal) -> Result<(), DatabaseError> {
+        if self.credit >= amount {
+            self.credit -= amount;
+            Ok(())
+        } else {
+            Err(DatabaseError::InsufficientBalance(self.get_actual_credit()))
+        }
+    }
+
+    pub fn reset_credit(&mut self) {
+        self.credit = 0.into();
     }
 }
 
@@ -138,7 +159,7 @@ impl DocumentNumber {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, serde::Deserialize)]
+#[derive(Debug, Clone, Hash, PartialEq, PartialOrd, Eq, serde::Deserialize, serde::Serialize)]
 pub struct UserName(String);
 
 // TODO(elsuizo: 2025-07-12): sacar todos los comentarios en espaniol

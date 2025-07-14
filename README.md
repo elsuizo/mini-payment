@@ -14,17 +14,17 @@ available endpoints:
  - `POST` `/new_client`
    - imput:
     ```json
-    {"client_name": String,"birth_date":String,"document_number":String,"country":"String"}
+    {"client_name":"String","birth_date":"String","document_number":"String","country":"String"}
     ```
  - `POST` `/new_credit_transaction`
    - imput:
     ```json
-    {"client_id": uuid,"credit_amount":decimal}
+    {"client_id":"uuid","credit_amount":"decimal"}
     ```
  - `POST` `/new_debit_transaction`
    - imput:
     ```json
-    {"client_id": uuid,"debit_amount":decimal}
+    {"client_id":"uuid","debit_amount":"decimal"}
     ```
  - `POST` `/store_balances`
    - input: no input

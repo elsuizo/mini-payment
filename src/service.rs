@@ -35,6 +35,7 @@ impl Application {
     }
 }
 
+/// server main function
 pub async fn run(
     listener: TcpListener,
     database: Arc<Mutex<Database>>,

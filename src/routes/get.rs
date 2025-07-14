@@ -1,5 +1,5 @@
 use crate::local_database::Database;
-use crate::user::{DatabaseError, User, UserName};
+use crate::user::{DatabaseError, UserName};
 use actix_web::web;
 use rust_decimal::Decimal;
 use std::sync::{Arc, Mutex};

@@ -16,7 +16,7 @@ use uuid::Uuid;
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct UserData {
     client_name: String,
-    bird_date: String,
+    birth_date: String,
     document_number: usize,
     country: String,
 }
@@ -32,7 +32,7 @@ pub async fn client_creation(
 ) -> Result<web::Json<Out>, CreateUserError> {
     let user_name = UserName::parse_and_validate(&data.client_name)?;
     // TODO(elsuizo: 2025-07-13): better error for parsing `bird_date`
-    let bird_date = NaiveDate::parse_from_str(&data.bird_date, "%Y-%m-%d")
+    let bird_date = NaiveDate::parse_from_str(&data.birth_date, "%Y-%m-%d")
         .expect("Error parsing the date, use the format: Y-m-d");
     let document_number = DocumentNumber::parse_and_validate(data.document_number)?;
     let country = CountryName::parse_and_validate(&data.country)?;

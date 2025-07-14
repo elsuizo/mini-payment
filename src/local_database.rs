@@ -3,8 +3,8 @@ use chrono::{DateTime, Datelike, Local};
 use rust_decimal::Decimal;
 use std::collections::HashMap;
 use std::error::Error;
+use std::fs::File;
 use std::io::Write;
-use std::{fmt::format, fs::File};
 use uuid::Uuid;
 
 #[derive(Debug, serde::Deserialize)]

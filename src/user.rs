@@ -87,6 +87,14 @@ impl User {
     pub fn reset_credit(&mut self) {
         self.credit = 0.into();
     }
+
+    pub fn get_bird_date(&self) -> NaiveDate {
+        self.bird_date
+    }
+
+    pub fn get_country_name(&self) -> &str {
+        self.country.as_ref()
+    }
 }
 
 impl PartialEq for User {
